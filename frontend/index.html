@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<meta name="theme-color" content="#090807" />
+<title>KesslerX — Planet Jumping</title>
+<style>
+@font-face{font-family:'SF Pro';src:local('SF Pro Display'),local('SF Pro');font-weight:400;font-display:swap}
+@font-face{font-family:'SF Pro';src:local('SF Pro Display Bold'),local('SF Pro Bold');font-weight:700;font-display:swap}
+@font-face{font-family:'SF Pro Thin';src:local('SF Pro Display Ultralight'),local('SF Pro Thin');font-weight:100;font-display:swap}
+@font-face{font-family:'Aalto';src:local('Aalto Sans'),local('Aalto');font-weight:400;font-display:swap}
+:root{font-family:'SF Pro',Arial,sans-serif;color:#fff;background:#090807;font-synthesis:none}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden}
+button,a{font:inherit}button:focus-visible,a:focus-visible{outline:2px solid #fff;outline-offset:4px}
+.experience{position:relative;width:100%;height:100%;height:100dvh;min-height:540px;overflow:hidden;background:#0a0908}
+.backgrounds,.background,.shade,.transition-layer,.transition-layer video{position:absolute;inset:0;width:100%;height:100%}
+.backgrounds{z-index:0}.background{object-fit:cover;opacity:0;transition:opacity .8s ease}.background.is-visible{opacity:1}
+.shade{z-index:1;background:linear-gradient(to bottom,transparent 52%,rgba(0,0,0,.88) 100%);pointer-events:none}
+.chrome{position:absolute;z-index:4;transition:opacity .45s ease,filter .45s ease}
+.experience.is-transitioning .chrome{opacity:0;filter:blur(8px);pointer-events:none}
+.header{left:clamp(18px,1.95vw,28px);right:clamp(18px,1.95vw,28px);top:clamp(18px,3.1vh,28px);display:flex;justify-content:space-between;align-items:center}
+.header-actions{margin-left:auto;display:flex;align-items:center;gap:12px}
+.nav{display:flex;align-items:center;height:42px;padding:4px 5px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.1);backdrop-filter:blur(12px);border-radius:999px}
+.nav a{color:#fff;text-decoration:none;padding:8px 19px;border-radius:999px;line-height:1;font-size:14px}.nav a.active{background:#fff;color:#000}
+.menu{height:42px;padding:0 20px;border:0;border-radius:999px;background:#fff;color:#000;cursor:pointer;font-size:14px}
+.planet-list{left:clamp(18px,1.95vw,28px);top:50%;transform:translateY(-43%);display:flex;flex-direction:column;gap:6px;font-size:16px;text-shadow:0 1px 6px #0008}
+.planet-item{display:flex;align-items:center;min-height:20px;white-space:nowrap}.planet-item.active{font-size:18px;font-weight:700;gap:8px}.planet-item.active:before{content:'';width:16px;height:16px;border-radius:50%;background:#fff}
+.portal-wrap{left:50%;top:50%;width:min(320px,31vw);transform:translate(-50%,-54%);perspective:none}
+.portal-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:16px;opacity:0;white-space:nowrap;text-shadow:0 1px 8px #000}
+.portal-heading strong{font-size:18px;margin-left:8px}.portal{position:relative;display:block;width:100%;aspect-ratio:320/350;padding:0;overflow:visible;border:0;border-radius:90px;background:transparent;cursor:pointer;box-shadow:none;transform:none!important}
+.portal:focus-visible{outline:2px solid white;border-radius:90px;outline-offset:8px}
+.portal video,.portal img{visibility:hidden;position:absolute;width:1px;height:1px;pointer-events:none}
+.portal-canvas{position:fixed;inset:0;z-index:3;width:100%;height:100%;pointer-events:none}
+.planet-content{left:clamp(28px,4vw,58px);right:clamp(28px,3vw,44px);bottom:clamp(24px,3vh,30px);display:flex;justify-content:space-between;align-items:flex-end;gap:40px;pointer-events:none}
+.planet-content h1{font-family:'Aalto','Arial Narrow',Impact,sans-serif;font-stretch:condensed;font-size:clamp(128px,21.8vw,314px);font-weight:400;line-height:.72;margin:0 0 -.04em;letter-spacing:-.045em;transform:translateX(-32px);opacity:0}
+.planet-content dl{width:min(447px,34vw);margin:0;font-size:16px}.fact{display:grid;grid-template-columns:138px 1fr;gap:18px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.48);opacity:0}.fact:last-child{border-bottom:0}.fact dt{font-weight:700}.fact dd{margin:0;line-height:1.35}
+.transition-layer{display:none}.scene-canvas{display:none}.loading{position:absolute;z-index:12;left:50%;bottom:30px;transform:translateX(-50%);opacity:0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;transition:opacity .2s;pointer-events:none}
+.experience.is-loading .loading{opacity:.8}.experience.is-transitioning .header,.experience.is-transitioning .planet-list{opacity:1;filter:none;pointer-events:auto}.experience.is-transitioning .shade{opacity:1}.experience.is-committing .background{transition:none!important}
+.preloader{position:absolute;inset:0;z-index:20;background:#000;overflow:hidden}.preloader video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.preloader-shade{position:absolute;inset:auto 0 0;height:35%;background:linear-gradient(to bottom,transparent,#000)}.preloader.is-background{z-index:0}.preloader.is-background .preloader-shade{opacity:0}
+.floating-logo{position:fixed;z-index:22;left:50%;top:50%;width:59px;height:58px;object-fit:contain;transform:translate(-50%,-50%);will-change:left,top,width,height,transform;transition:left 2s cubic-bezier(.16,1,.3,1),top 2s cubic-bezier(.16,1,.3,1),width 2s cubic-bezier(.16,1,.3,1),height 2s cubic-bezier(.16,1,.3,1),transform 2s cubic-bezier(.16,1,.3,1)}
+.floating-logo.is-docked{left:clamp(18px,1.95vw,28px);top:clamp(18px,3.1vh,28px);width:37px;height:36px;transform:none}.floating-logo.is-settled{z-index:5}
+.preloader-count{position:fixed;z-index:22;left:50%;bottom:clamp(22px,3.1vh,28px);display:flex;align-items:flex-end;gap:4px;transform:translateX(-50%);font-family:'SF Pro',Arial,sans-serif;line-height:1}.preloader-count>span:first-child{font-family:'SF Pro Thin','SF Pro',Arial,sans-serif;font-size:64px;font-weight:100}.preloader-count .percent{font-size:24px;padding-bottom:4px}.preloader-count.is-leaving{animation:preload-count-out .75s cubic-bezier(.22,1,.36,1) both}
+@keyframes preload-count-out{to{opacity:0;filter:blur(7px);transform:translate(-50%,-34px)}}body:not(.preload-complete) .custom-cursor{opacity:0!important}
+html,body,button,a,.portal{cursor:none!important}.custom-cursor{display:block;position:fixed;left:0;top:0;z-index:100;width:1px;height:1px;pointer-events:none;opacity:0;transition:opacity .2s ease}.custom-cursor.is-visible{opacity:1}.cursor-dot,.cursor-orbit{position:absolute;left:0;top:0;border-radius:50%;transform:translate(-50%,-50%)}.cursor-dot{width:12px;height:12px;background:#fff}.cursor-orbit{width:36px;height:36px;border:1px solid #fff;background:rgba(255,255,255,.4);transition:transform .3s cubic-bezier(.22,1,.36,1)}.custom-cursor.is-enter .cursor-orbit{transform:translate(-50%,-50%) scale(1.16)}.cursor-label{position:absolute;top:26px;left:0;transform:translateX(-50%) translateY(-4px);font:16px/1.2 'SF Pro',Arial,sans-serif;white-space:nowrap;opacity:0;transition:opacity .2s ease,transform .3s cubic-bezier(.22,1,.36,1)}.custom-cursor.is-enter .cursor-label{opacity:1;transform:translateX(-50%) translateY(0)}
+body:not(.intro-ready) .header,body:not(.intro-ready) .planet-list,body:not(.intro-ready) .planet-content h1,body:not(.intro-ready) .planet-content .fact{opacity:0}
+.intro-ready .header{animation:reveal-down .9s cubic-bezier(.22,1,.36,1) .1s both}.intro-ready .planet-list{animation:reveal-side .9s cubic-bezier(.22,1,.36,1) .65s both}
+.content-revealing h1{animation:title-rise 1.05s cubic-bezier(.16,1,.3,1) both}.content-revealing .fact{animation:fact-rise .72s cubic-bezier(.22,1,.36,1) both}.content-revealing .fact:nth-child(1){animation-delay:.52s}.content-revealing .fact:nth-child(2){animation-delay:.68s}.content-revealing .fact:nth-child(3){animation-delay:.84s}.content-revealing .fact:nth-child(4){animation-delay:1s}
+.mask-revealing .portal-heading{animation:portal-caption .85s cubic-bezier(.22,1,.36,1) both}.planet-list.is-switching .planet-item{animation:menu-row .58s cubic-bezier(.22,1,.36,1) both}.planet-list.is-switching .planet-item:nth-child(1){animation-delay:.02s}.planet-list.is-switching .planet-item:nth-child(2){animation-delay:.05s}.planet-list.is-switching .planet-item:nth-child(3){animation-delay:.08s}.planet-list.is-switching .planet-item:nth-child(4){animation-delay:.11s}.planet-list.is-switching .planet-item:nth-child(5){animation-delay:.14s}.planet-list.is-switching .planet-item:nth-child(6){animation-delay:.17s}.planet-list.is-switching .planet-item:nth-child(7){animation-delay:.2s}.planet-list.is-switching .planet-item:nth-child(8){animation-delay:.23s}.planet-list.is-switching .planet-item.active:before{animation:active-dot .55s cubic-bezier(.22,1,.36,1) .18s both}
+@keyframes reveal-down{from{opacity:0;filter:blur(8px);transform:translateY(-18px)}to{opacity:1;filter:blur(0);transform:translateY(0)}}@keyframes reveal-side{from{opacity:0;filter:blur(8px);transform:translate(-20px,-43%)}to{opacity:1;filter:blur(0);transform:translate(0,-43%)}}@keyframes title-rise{from{opacity:0;filter:blur(12px);transform:translate(-32px,42px)}to{opacity:1;filter:blur(0);transform:translate(-32px,0)}}@keyframes fact-rise{from{opacity:0;filter:blur(7px);transform:translateY(18px)}to{opacity:1;filter:blur(0);transform:translateY(0)}}@keyframes portal-caption{from{opacity:0;filter:blur(7px);transform:translateY(22px)}to{opacity:1;filter:blur(0);transform:translateY(0)}}@keyframes menu-row{from{opacity:.35;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}@keyframes active-dot{from{opacity:0;transform:scale(0)}to{opacity:1;transform:scale(1)}}
+@media(max-width:900px){.nav{display:none}.portal-wrap{width:min(300px,48vw)}.planet-content h1{font-size:clamp(105px,24vw,190px)}.planet-content dl{width:43vw}.fact{grid-template-columns:110px 1fr}.planet-list{font-size:14px}.planet-item.active{font-size:16px}}
+@media(max-width:640px){.experience{min-height:600px}.planet-list{display:none!important}.portal-wrap{top:44%;width:min(260px,66vw)}.planet-content{left:18px;right:18px;bottom:18px;display:block}.planet-content h1{font-size:clamp(98px,30vw,160px);margin-bottom:20px}.planet-content dl{width:100%;font-size:13px}.fact{grid-template-columns:92px 1fr;padding:5px 0}.portal-heading{font-size:14px}.portal-heading strong{font-size:16px}.menu{height:38px}.portal{border-radius:70px}}
+@media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}.portal{transform:none!important}}
+@media(pointer:coarse){html,body,button,a,.portal{cursor:auto!important}.custom-cursor{display:none}}
+</style>
+</head>
+<body>
+<main class="experience" data-planet="mars">
+  <div class="backgrounds" aria-hidden="true">
+    <video id="mars-background" class="background is-visible" muted playsinline preload="auto"></video>
+    <video id="earth-background" class="background" muted playsinline preload="auto"></video>
+    <video id="venus-background" class="background" muted playsinline preload="auto"></video>
+  </div>
+  <div class="preloader" id="preloader" aria-label="Loading Mars"><video id="preloader-video" muted playsinline preload="auto"></video><div class="preloader-shade"></div></div>
+  <img class="floating-logo" id="floating-logo" alt="Ubernatural" />
+  <div class="preloader-count" id="preloader-count" aria-live="polite"><span id="preloader-value">0</span><span class="percent">%</span></div>
+  <canvas id="scene-canvas" class="scene-canvas" aria-hidden="true"></canvas>
+  <div class="shade" aria-hidden="true"></div>
+  <header class="header chrome"><div class="header-actions"><nav class="nav" aria-label="Primary navigation"><a class="active" href="#about">About</a><a href="#explore">Explore</a><a href="#planets">Planets</a></nav><button class="menu" type="button" aria-label="Open navigation">Menu</button></div></header>
+  <aside class="planet-list chrome" aria-label="Planets"></aside>
+  <canvas id="portal-canvas" class="portal-canvas" aria-hidden="true"></canvas>
+  <section class="portal-wrap chrome" aria-label="Next destination"><div class="portal-heading"><span>Next:</span><span><span id="next-number">[03]</span> <strong id="next-name">Earth</strong></span></div><button class="portal" id="portal" type="button" aria-label="Travel to Earth"><video id="portal-video" muted playsinline preload="auto"></video><img id="portal-image" alt="Mercury" /></button></section>
+  <section class="planet-content chrome" aria-live="polite"><h1 id="planet-title">MARS</h1><dl id="facts"></dl></section>
+  <div class="transition-layer" aria-hidden="true"><video id="transition-video" muted playsinline preload="auto"></video></div>
+  <div class="loading" aria-hidden="true">Preparing orbit…</div>
+  <div class="custom-cursor" aria-hidden="true"><span class="cursor-orbit"></span><span class="cursor-dot"></span><span class="cursor-label">Enter</span></div>
+</main>
+<script>
+(() => {
+'use strict';
+const BASE='https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P';
+const ASSETS={MARS_BG:`${BASE}/3c83091e-4046-4fd6-adbb-2edb728be79a.mp4`,TO_EARTH:`${BASE}/fc3ded42-e845-41f3-a830-5cab512d79cd.mp4`,TO_VENUS:`${BASE}/b30f64d9-1637-477a-83df-d0fc6461a422.mp4`,TO_MARS:`${BASE}/5fc5651c-3b5d-4171-b507-87f7e635d1b4.mp4`,MERCURY:`${BASE}/d6fb8b6b-c15e-4aaa-9cf7-45bbb5e33372.jpg`,LOGO:`${BASE}/eb7e0f53-50cd-4af5-abc4-8b9a52cdc01b.svg`};
+const $=id=>document.getElementById(id), root=document.querySelector('.experience');
+const planets=['Mercury','Venus','Earth','Mars','Jupiter','Saturn','Uranus','Neptune'];
+const states={
+ mars:{name:'Mars',next:'Earth',number:'[03]',portal:ASSETS.TO_EARTH,background:'mars-background',facts:[['Distance:','About 228 million km (1.5 astronomical units).'],['Year:','One Martian year is equal to 687 Earth days.'],['Temperature:','Around -60 °C, dropping to -125 °C at the poles in winter.'],['Atmosphere:','Very thin, consisting of 95% carbon dioxide, with frequent dust storms.']]},
+ earth:{name:'Earth',next:'Venus',number:'[02]',portal:ASSETS.TO_VENUS,background:'earth-background',facts:[['Distance:','149.6 million km from the Sun.'],['Year:','365.25 Earth days.'],['Temperature:','Average surface temperature around 15 °C.'],['Atmosphere:','Mostly nitrogen and oxygen, supporting life and liquid water.']]},
+ venus:{name:'Venus',next:'Mercury',number:'[06]',image:ASSETS.MERCURY,background:'venus-background',facts:[['Distance:','108.2 million km from the Sun.'],['Year:','225 Earth days.'],['Temperature:','Around 465 °C — the hottest planet in the Solar System.'],['Atmosphere:','Extremely dense, mostly carbon dioxide, with clouds of sulfuric acid.']]}
+};
+$('mars-background').src=ASSETS.MARS_BG;$('earth-background').src=ASSETS.TO_EARTH;$('venus-background').src=ASSETS.TO_VENUS;$('preloader-video').src=ASSETS.TO_MARS;$('portal-video').src=ASSETS.TO_EARTH;$('portal-image').src=ASSETS.MERCURY;$('floating-logo').src=ASSETS.LOGO;
+let current='mars',busy=false,firstRender=true,rotX=0,rotY=0,targetX=0,targetY=0,expansion=0,maskScale=0,canvasOpacity=1,transitionActive=false,frozen=false,lastTick=performance.now();
+const canvas=$('portal-canvas'),ctx=canvas.getContext('2d'),scene=$('scene-canvas'),sceneCtx=scene.getContext('2d');
+let pointerX=0,pointerY=0,cursorX=0,cursorY=0,hasPointer=false;
+function triggerClass(el,cls){el.classList.remove(cls);void el.offsetWidth;el.classList.add(cls)}
+function render(){const s=states[current];root.dataset.planet=current;$('planet-title').textContent=s.name.toUpperCase();$('next-name').textContent=s.next;$('next-number').textContent=s.number;$('portal').setAttribute('aria-label',`Travel to ${s.next}`);$('portal').disabled=current==='venus';
+ const facts=$('facts');facts.replaceChildren(...s.facts.map(([key,value])=>{const d=document.createElement('div');d.className='fact';const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=key;dd.textContent=value;d.append(dt,dd);return d}));
+ const list=document.querySelector('.planet-list');list.replaceChildren(...planets.map(p=>{const span=document.createElement('span');span.className=`planet-item${p.toLowerCase()===current?' active':''}`;span.textContent=p;return span}));if(!firstRender)triggerClass(list,'is-switching');firstRender=false;
+ document.querySelectorAll('.background').forEach(v=>v.classList.toggle('is-visible',v.id===s.background));
+ const pv=$('portal-video'),pi=$('portal-image');if(s.image){pi.src=s.image;pi.style.display='block';pv.style.display='none';pv.pause()}else{pi.style.display='none';pv.style.display='block';if(pv.src!==s.portal){pv.pause();pv.src=s.portal;pv.load()}pv.play().catch(()=>{})}}
+function sizeOne(c,cx){let d=Math.min(window.devicePixelRatio||1,2);c.width=Math.round(innerWidth*d);c.height=Math.round(innerHeight*d);cx.setTransform(d,0,0,d,0,0)}
+function resizeCanvas(){sizeOne(canvas,ctx);if(!frozen)sizeOne(scene,sceneCtx)}
+function drawCover(context,media){const mw=media.videoWidth||media.naturalWidth,mh=media.videoHeight||media.naturalHeight;if(!mw||!mh||media instanceof HTMLVideoElement&&media.readyState<2)return false;const scale=Math.max(innerWidth/mw,innerHeight/mh),w=mw*scale,h=mh*scale;try{context.drawImage(media,(innerWidth-w)/2,(innerHeight-h)/2,w,h);return true}catch{return false}}
+function drawShade(context){const gradient=context.createLinearGradient(0,innerHeight*.52,0,innerHeight);gradient.addColorStop(0,'rgba(0,0,0,0)');gradient.addColorStop(1,'rgba(0,0,0,.88)');context.fillStyle=gradient;context.fillRect(0,innerHeight*.52,innerWidth,innerHeight*.48)}
+function roundedPoints(w,h,r){r=Math.min(r,w/2,h/2);const corners=[[w/2-r,-h/2+r,-Math.PI/2,0],[w/2-r,h/2-r,0,Math.PI/2],[-w/2+r,h/2-r,Math.PI/2,Math.PI],[-w/2+r,-h/2+r,Math.PI,Math.PI*1.5]],points=[];corners.forEach(([cx,cy,a,b])=>{for(let i=0;i<=10;i++){const t=a+(b-a)*i/10;points.push([cx+r*Math.cos(t),cy+r*Math.sin(t)])}});return points}
+function projectedPath(cx,cy,w,h,r,rx,ry){const ax=rx*Math.PI/180,ay=ry*Math.PI/180;const ca=Math.cos(ax),sa=Math.sin(ax),cb=Math.cos(ay),sb=Math.sin(ay);const pts=roundedPoints(w,h,r);ctx.beginPath();pts.forEach(([x,y],i)=>{const xx=x*cb,yy=y*ca,z=x*sb-y*sa,p=850/(850+z),sx=cx+xx*p,sy=cy+yy*p;if(!i)ctx.moveTo(sx,sy);else ctx.lineTo(sx,sy)});ctx.closePath()}
+function draw(t){const dt=Math.min(t-lastTick,40);lastTick=t;rotX+=(targetX-rotX)*Math.min(1,dt*.009);rotY+=(targetY-rotY)*Math.min(1,dt*.009);ctx.clearRect(0,0,innerWidth,innerHeight);
+ if(frozen){try{ctx.drawImage(scene,0,0,innerWidth,innerHeight);drawShade(ctx)}catch{}}
+ const rect=$('portal').getBoundingClientRect(),e=expansion,cx=rect.left+rect.width/2+(innerWidth/2-(rect.left+rect.width/2))*e,cy=rect.top+rect.height/2+(innerHeight/2-(rect.top+rect.height/2))*e;
+ const w=(rect.width+(innerWidth-rect.width)*e)*(e?1:maskScale),h=(rect.height+(innerHeight-rect.height)*e)*(e?1:maskScale),r=90*(1-e)*(e?1:maskScale);
+ if(w>1&&h>1){projectedPath(cx,cy,w,h,r,rotX*(1-e),rotY*(1-e));ctx.save();ctx.globalAlpha=canvasOpacity;ctx.clip();ctx.fillStyle='#030303';ctx.fillRect(0,0,innerWidth,innerHeight);const media=transitionActive?$('transition-video'):(states[current].image?$('portal-image'):$('portal-video'));drawCover(ctx,media);if(transitionActive)drawShade(ctx);ctx.restore()}
+ requestAnimationFrame(draw)}
+function ease(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2}
+function animateValue(setter,duration){return new Promise(resolve=>{const start=performance.now();function frame(now){let t=Math.min((now-start)/duration,1);setter(ease(t));if(t<1)requestAnimationFrame(frame);else resolve()}requestAnimationFrame(frame)})}
+function waitForMedia(media,timeout=1600){return new Promise(resolve=>{if(media instanceof HTMLImageElement&&media.complete&&media.naturalWidth){resolve(true);return}if(media instanceof HTMLVideoElement&&media.readyState>=2){resolve(true);return}let done=false;const clean=v=>{if(done)return;done=true;clearTimeout(timer);media.removeEventListener('canplay',good);media.removeEventListener('loadeddata',good);media.removeEventListener('load',good);media.removeEventListener('error',bad);resolve(v)};const good=()=>clean(true),bad=()=>clean(false),timer=setTimeout(()=>clean(false),timeout);for(const ev of ['canplay','loadeddata','load'])media.addEventListener(ev,good,{once:true});media.addEventListener('error',bad,{once:true})})}
+function revealMask(){triggerClass(root,'mask-revealing');maskScale=0;return animateValue(v=>maskScale=v,1050)}
+function revealPlanetContent(){triggerClass(root,'content-revealing')}
+function delay(ms){return new Promise(r=>setTimeout(r,ms))}
+async function startExperience(){const media=states[current].image?$('portal-image'):$('portal-video');await waitForMedia(media,2600);await revealMask();document.body.classList.add('intro-ready');await delay(850);revealPlanetContent()}
+async function runPreloader(){const video=$('preloader-video'),counter=$('preloader-count'),logo=$('floating-logo');let finished=false;const finish=()=>{if(finished)return;finished=true;$('preloader-value').textContent='100';counter.classList.add('is-leaving');logo.classList.add('is-docked');$('preloader').classList.add('is-background');document.body.classList.add('preload-complete');startExperience().catch(console.error);setTimeout(()=>counter.remove(),750);setTimeout(()=>logo.classList.add('is-settled'),2000)};
+ const ready=await new Promise(resolve=>{if(video.readyState>=1&&Number.isFinite(video.duration)){resolve(true);return}const timer=setTimeout(()=>resolve(false),4000);video.addEventListener('loadedmetadata',()=>{clearTimeout(timer);resolve(true)},{once:true});video.addEventListener('error',()=>{clearTimeout(timer);resolve(false)},{once:true})});if(!ready||!video.duration){finish();return}
+ video.playbackRate=Math.max(.25,video.duration/3);let raf=0;function update(){if(finished)return;$('preloader-value').textContent=String(Math.min(99,Math.round(video.currentTime/video.duration*100)));raf=requestAnimationFrame(update)};video.addEventListener('ended',()=>{cancelAnimationFrame(raf);finish()},{once:true});video.play().then(()=>{raf=requestAnimationFrame(update)}).catch(finish);setTimeout(finish,Math.max(6500,video.duration/video.playbackRate*1000+2500))}
+async function travel(){if(busy||current==='venus')return;busy=true;targetX=targetY=0;const next=current==='mars'?'earth':'venus',v=$('transition-video');let committed=false;
+ try{v.src=states[current].portal;v.load();root.classList.add('is-loading');await waitForMedia(v,1600);root.classList.remove('is-loading','content-revealing','mask-revealing');root.classList.add('is-transitioning');v.currentTime=0;v.playbackRate=1.3;canvasOpacity=1;transitionActive=true;
+ const playResult=v.play();if(playResult)await playResult.catch(()=>{});await animateValue(x=>expansion=x,1100);
+ if(v.readyState>=2&&!v.ended){await Promise.race([new Promise(r=>v.addEventListener('ended',r,{once:true})),delay(5000)])}
+ frozen=false;sizeOne(scene,sceneCtx);frozen=drawCover(sceneCtx,v);current=next;root.classList.add('is-committing');render();await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+ transitionActive=false;expansion=0;maskScale=0;canvasOpacity=1;root.classList.remove('is-transitioning','is-committing');committed=true;
+ const reveal=revealMask();setTimeout(revealPlanetContent,100);await reveal;await delay(450);
+ }catch(error){console.error('Portal transition failed:',error);transitionActive=false;expansion=0;maskScale=1;canvasOpacity=1;root.classList.remove('is-transitioning','is-committing');}
+ finally{frozen=false;root.classList.remove('is-loading');v.pause();v.removeAttribute('src');v.load();busy=false;if(!committed){root.classList.add('content-revealing','mask-revealing')}}}
+const cursor=document.querySelector('.custom-cursor');function cursorLoop(){if(hasPointer){cursorX+=(pointerX-cursorX)*.2;cursorY+=(pointerY-cursorY)*.2;cursor.style.transform=`translate3d(${cursorX}px,${cursorY}px,0)`}requestAnimationFrame(cursorLoop)}
+if(matchMedia('(pointer:fine)').matches){document.addEventListener('pointermove',e=>{pointerX=e.clientX;pointerY=e.clientY;if(!hasPointer){cursorX=pointerX;cursorY=pointerY;hasPointer=true}cursor.classList.add('is-visible');if(!busy){targetY=(e.clientX/innerWidth-.5)*37.4;targetX=(e.clientY/innerHeight-.5)*-33}});document.addEventListener('pointerleave',()=>{cursor.classList.remove('is-visible');targetX=targetY=0});$('portal').addEventListener('pointerenter',()=>cursor.classList.add('is-enter'));$('portal').addEventListener('pointerleave',()=>{cursor.classList.remove('is-enter');targetX=targetY=0})}
+$('portal').addEventListener('click',travel);
+$('portal').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();travel()}});
+// Keep the original nav semantics, but make the Menu button operate a real compact nav.
+const menu=document.querySelector('.menu');menu.addEventListener('click',()=>{const nav=document.querySelector('.nav');const visible=getComputedStyle(nav).display!=='none';nav.style.display=visible?'none':'flex';nav.style.position='absolute';nav.style.right='0';nav.style.top='52px';nav.style.zIndex='5';nav.style.flexDirection=innerWidth<640?'column':'row';menu.setAttribute('aria-expanded',String(!visible))});
+for(const a of document.querySelectorAll('.nav a'))a.addEventListener('click',e=>{e.preventDefault();document.querySelector('.nav a.active')?.classList.remove('active');a.classList.add('active');if(a.hash==='#planets')document.querySelector('.planet-list')?.classList.add('is-switching')});
+for(const v of document.querySelectorAll('.background')){v.pause();try{v.currentTime=0}catch{}}
+window.addEventListener('resize',resizeCanvas,{passive:true});resizeCanvas();render();requestAnimationFrame(draw);requestAnimationFrame(cursorLoop);runPreloader();
+})();
+</script>
+</body>
+</html>
